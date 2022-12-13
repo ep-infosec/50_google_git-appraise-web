@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<!--
+Copyright 2016 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<html>
+<head>
+  <title>Repository List</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/webcomponentsjs/0.7.22/webcomponents-lite.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+
+  <link rel="import" href="https://raw.githubusercontent.com/Download/polymer-cdn/1.2.3.2/lib/polymer/polymer.html">
+  <link rel="import" href="https://raw.githubusercontent.com/Download/polymer-cdn/1.2.3.2/lib/paper-card/paper-card.html">
+  <link rel="import" href="https://raw.githubusercontent.com/Download/polymer-cdn/1.2.3.2/lib/paper-item/paper-item.html">
+  <link rel="import" href="https://raw.githubusercontent.com/Download/polymer-cdn/1.2.3.2/lib/paper-listbox/paper-listbox.html">
+  <link rel="import" href="https://raw.githubusercontent.com/Download/polymer-cdn/1.2.3.2/lib/paper-toolbar/paper-toolbar.html">
+
+  <link rel="stylesheet" href="/static/reviews.css">
+
+  <script src="/static/reviews.js"></script>
+</head>
+<body ng-app="gitAppraiseWeb">
+  <dom-module id="repo-list">
+    <template>
+      <style>
+        .repo {
+          width: 100%;
+          padding: 20px;
+          font-size: medium;
+        }
+      </style>
+      <paper-toolbar>
+        <span class="title">Git-Appraise Web UI > Repositories</span>
+      </paper-toolbar>
+      <paper-listbox>
+        <template is="dom-repeat" items="{{repos}}">
+          <paper-item>
+            <paper-card>
+              <div class="repo"><a href="/static/reviews.html#?repo={{item.id}}">{{item.name}}</a></div>
+            </paper-card>
+          </paper-item>
+        </template>
+      </paper-listbox>
+    </template>
+    <script>
+      addEventListener('WebComponentsReady', function() {
+        Polymer({
+          is: 'repo-list',
+          properties: {
+            repos: {
+              type: Array,
+            },
+          }
+        });
+      });
+    </script>
+  </dom-module>
+
+  <div ng-controller="listRepos">
+    <repo-list repos="{{repositories}}"></repo-list>
+  </div>
+</body>
+</html>

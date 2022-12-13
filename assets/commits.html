@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<!--
+Copyright 2016 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<html>
+  <head>
+    <link rel="import" href="https://raw.githubusercontent.com/Download/polymer-cdn/1.2.3.2/lib/polymer/polymer.html">
+    <link rel="import" href="https://raw.githubusercontent.com/Download/polymer-cdn/1.2.3.2/lib/paper-button/paper-button.html">
+    <link rel="import" href="https://raw.githubusercontent.com/Download/polymer-cdn/1.2.3.2/lib/paper-toolbar/paper-toolbar.html">
+    <link rel="import" href="https://raw.githubusercontent.com/Download/polymer-cdn/1.2.3.2/lib/paper-radio-button/paper-radio-button.html">
+
+    <link rel="import" href="/static/diff.html">
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  </head>
+  <body>
+    <dom-module id="commits-list">
+      <template>
+        <style>
+          .lhs-only {
+            background-color:#e4e4e4;
+          }
+          .radio {
+            width: 20px;
+          }
+          .commit-list {
+            border-bottom: lightgrey;
+            border-bottom-style: solid;
+            border-bottom-width: thin;
+          }
+          paper-button {
+            font-size: inherit;
+            height: inherit;
+          }
+        </style>
+        <paper-toolbar>
+          <i class="material-icons" on-tap="toggleHidden">{{toggleIcon}}</i>
+          <span class="title">Changes:</span>
+          <paper-button raised on-tap="toggleInline">{{inlineButtonTitle}}</paper-button>
+        </paper-toolbar>
+        <table class="commit-list" hidden$="{{hidden}}">
+          <template is="dom-repeat" items="{{commits}}">
+            <tr class$="{{item.style}}">
+              <td>{{item.name}}</td>
+              <td><friendly-timestamp timestamp="{{item.details.time}}"></friendly-timestamp></td>
+              <td class="author">{{item.details.authorEmail}}</td>
+              <td class="summary">{{item.details.summary}}</td>
+              <td class="radio">
+                <paper-radio-button name="lhs"
+                                    checked="{{item.isLhs}}"
+                                    hidden$="{{item.hideLeftHandSelect}}"
+                                    disabled="true">
+                </paper-radio-button>
+              </td>
+              <td class="radio">
+                <paper-radio-button name="rhs"
+                                    checked="{{item.isRhs}}"
+                                    hidden$="{{item.hideRightHandSelect}}"
+                                    disabled="true">
+                </paper-radio-button>
+              </td>
+            </tr>
+          </template>
+        </table>
+        <unified-diff summary="{{diff}}" inline="{{inline}}" hidden$="{{hidden}}"></unified-diff>
+      </template>
+      <script>
+        function friendlyCommits(review, lhs, rhs, commits) {
+          rhsCommits = {}
+
+          function addToRhs(commit) {
+            commit.style = "both";
+            commit.showRhs = true;
+            commit.hideRightHandSelect = false;
+            rhsCommits[commit.id] = commit;
+          }
+
+          for (var i in commits) {
+            var commit = commits[i];
+            commit.name = commit.id.substring(0,6);
+            commit.style = "lhs-only";
+            commit.hideLeftHandSelect = false;
+            commit.hideRightHandSelect = true;
+            commit.isLhs = (commit.id == lhs);
+            commit.isRhs = (commit.id == rhs);
+            if (commit.id == review) {
+              addToRhs(commit);
+            } else {
+              for (var p in commit.details.parents) {
+                var parent = commit.details.parents[p];
+                if (parent in rhsCommits) {
+                  addToRhs(commit);
+                }
+              }
+            }
+          }
+          commits.reverse();
+          commits[0].style = "rhs-only";
+          commits[0].hideLeftHandSelect = true;
+          return commits
+        }
+
+        Polymer({
+          is: 'commits-list',
+          properties: {
+            review: {
+              type: String
+            },
+            diff: {
+              type: Object,
+              observer: "_updateDiff"
+            },
+            leftHandSide: {
+              type: String,
+              value: ""
+            },
+            rightHandSide: {
+              type: String,
+              value: ""
+            },
+            commits: {
+              type: Array,
+              value: []
+            },
+            toggleIcon: {
+              type: String,
+              value: "indeterminate_check_box"
+            },
+            hidden: {
+              type: Boolean,
+              value: false
+            },
+            inline: {
+              type: Boolean,
+              value: false
+            },
+            inlineButtonTitle: {
+              type: String,
+              value: "Display Inline"
+            }
+          },
+          toggleHidden: function() {
+            this.hidden = !this.hidden;
+            if (this.hidden) {
+              this.toggleIcon = "add_box"
+            } else {
+              this.toggleIcon = "indeterminate_check_box"
+            }
+          },
+          toggleInline: function() {
+            this.inline = !this.inline;
+            this.inlineButtonTitle = this.inline? "Display Side-by-Side" : "Display Inline";
+          },
+          _updateDiff: function() {
+            if (this.diff && this.diff.reviewCommits) {
+              this.leftHandSide = this.diff.leftHandSide;
+              this.rightHandSide = this.diff.rightHandSide;
+              this.commits = friendlyCommits(this.review, this.leftHandSide,
+                                             this.rightHandSide,
+                                             this.diff.reviewCommits);
+            }
+          }
+        });
+      </script>
+    </dom-module>
+  </body>
+</html>
+

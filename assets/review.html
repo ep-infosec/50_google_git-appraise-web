@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<!--
+Copyright 2016 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<html>
+<head>
+  <title>Review Details</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/webcomponentsjs/0.7.22/webcomponents-lite.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+
+  <link rel="import" href="https://raw.githubusercontent.com/Download/polymer-cdn/1.2.3.2/lib/polymer/polymer.html">
+  <link rel="import" href="https://raw.githubusercontent.com/Download/polymer-cdn/1.2.3.2/lib/paper-card/paper-card.html">
+  <link rel="import" href="https://raw.githubusercontent.com/Download/polymer-cdn/1.2.3.2/lib/paper-item/paper-item.html">
+  <link rel="import" href="https://raw.githubusercontent.com/Download/polymer-cdn/1.2.3.2/lib/paper-listbox/paper-listbox.html">
+  <link rel="import" href="https://raw.githubusercontent.com/Download/polymer-cdn/1.2.3.2/lib/paper-toolbar/paper-toolbar.html">
+
+  <link rel="import" href="/static/comments.html">
+  <link rel="import" href="/static/commits.html">
+  <link rel="import" href="/static/ci.html">
+  <link rel="import" href="/static/markdown.html">
+  <link rel="stylesheet" href="/static/reviews.css">
+
+  <script src="/static/reviews.js"></script>
+</head>
+<body ng-app="gitAppraiseWeb">
+  <dom-module id="review-details">
+    <template>
+      <style>
+        .pending {
+          background-color:#e4e4e4;
+        }
+
+        .accepted {
+          background-color:#e4ffe4;
+        }
+
+        .rejected {
+          background-color:#ffe4e4;
+        }
+
+        .details {
+          vertical-align: top;
+          padding: 10px 0px;
+        }
+
+        .description {
+          width: 100%;
+          background-color:#ffffff;
+        }
+
+        .field {
+          font-weight: bold;
+          white-space: pre;
+          padding: 0px 10px;
+        }
+
+        .value {
+          white-space: pre;
+          padding: 0px 10px;
+        }
+
+        continuous-integration {
+          width: 100%;
+        }
+      </style>
+      <paper-toolbar>
+        <span class="title">Git-Appraise Web UI > {{repo}} > {{details.revision}} </span>
+      </paper-toolbar>
+      <paper-listbox>
+        <paper-item>
+          <paper-card>
+            <paper-toolbar>
+              <span class="title">Summary:</span>
+            </paper-toolbar>
+            <table class$="{{status}}">
+              <tr>
+                <td class="details">
+                  <table>
+                    <tr>
+                      <td class="field">Revision:</td>
+                      <td class="value">{{details.revision}}</td>
+                    </tr>
+                    <tr>
+                      <td class="field">Requester:</td>
+                      <td class="value">{{details.request.requester}}</td>
+                    </tr>
+                    <tr>
+                      <td class="field">Review Ref:</td>
+                      <td class="value">{{details.request.reviewRef}}</td>
+                    </tr>
+                    <tr>
+                      <td class="field">Target Ref:</td>
+                      <td class="value">{{details.request.targetRef}}</td>
+                    </tr>
+                  </table>
+                </td>
+                <td class="description">
+                  <markdown-field text="{{details.request.description}}"></markdown-field>
+                </td>
+              </tr>
+            </table>
+          </paper-card>
+        </paper-item>
+        <paper-item>
+          <paper-card>
+            <commits-list review="{{details.revision}}" diff="{{diff}}"></commits-list>
+          </paper-card>
+        </paper-item>
+        <paper-item>
+          <continuous-integration reports="{{details.reports}}"></continuous-integration>
+        </paper-item>
+        <paper-item>
+          <paper-card>
+            <paper-toolbar><span class="title">Discussion:</span></paper-toolbar>
+            <comment-threads items="{{details.comments}}"></comment-threads>
+          </paper-card>
+        </paper-item>
+      </paper-listbox>
+    </template>
+    <script>
+      addEventListener('WebComponentsReady', function() {
+        Polymer({
+          is: 'review-details',
+          properties: {
+            repo: {
+              type: String
+            },
+            details: {
+              type: Object,
+              observer: '_updateDetailsStatus'
+            },
+            diff: {
+              type: Object
+            },
+            status: {
+              type: String,
+              value: 'pending'
+            }
+          },
+          _updateDetailsStatus: function() {
+            if (this.details && ((typeof this.details) == 'object')) {
+              if ('resolved' in this.details) {
+                if (this.details.resolved) {
+                  this.status = 'accepted';
+                } else {
+                  this.status = 'rejected';
+                }
+              } else {
+                this.status = 'pending';
+              }
+            }
+          }
+        });
+      });
+    </script>
+  </dom-module>
+
+  <div ng-controller="getReview">
+    <review-details repo="{{path}}" details="{{details}}" diff="{{diff}}"></review-details>
+  </div>
+</body>
+</html>
